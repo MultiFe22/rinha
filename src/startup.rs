@@ -1,5 +1,6 @@
 use crate::configuration::DatabaseSettings;
 use crate::configuration::Settings;
+use crate::routes::get_extrato;
 use crate::routes::health_check;
 use crate::routes::register_transacao;
 // use actix_session::storage::RedisSessionStore;
@@ -22,10 +23,8 @@ use std::net::TcpListener;
 async fn run(
     listener: TcpListener,
     db_pool: PgPool,
-    base_url: String,
 ) -> Result<Server, anyhow::Error> {
     let db_pool = web::Data::new(db_pool);
-    let base_url = web::Data::new(ApplicationBaseUrl(base_url));
     let server = HttpServer::new(move || {
         // Wrap the connection in a smart pointer
         App::new()
@@ -34,8 +33,10 @@ async fn run(
                 "/clientes/{id}/transacoes",
                 web::post().to(register_transacao),
             )
+            .route(
+                "/clientes/{id}/extrato",
+                web::get().to(get_extrato))
             .app_data(db_pool.clone())
-            .app_data(base_url.clone())
     })
     .listen(listener)?
     .run();
@@ -69,10 +70,8 @@ impl Application {
         let server = run(
             listener,
             connection_pool,
-            configuration.application.base_url,
         )
         .await?;
-        println!("Server running on port {}", port);
         // We "save" the bound port in one of `Application`'s fields
         Ok(Self { port, server })
     }
@@ -89,6 +88,7 @@ impl Application {
 
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
     PgPoolOptions::new()
+        .max_connections(400)
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy_with(configuration.with_db())
 }

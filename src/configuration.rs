@@ -16,7 +16,6 @@ pub struct AplicationSettings {
     pub port: u16,
     pub host: String,
     // new field:
-    pub base_url: String,
 }
 
 #[derive(Clone, serde::Deserialize)]
@@ -55,7 +54,6 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
                 .ignore_empty(true),
         )
         .build()?;
-
     settings.try_deserialize::<Settings>()
 }
 

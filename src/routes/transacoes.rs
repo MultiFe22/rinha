@@ -2,8 +2,8 @@ use crate::domain::{Transacao, TransacaoDescricao, TransacaoTipo};
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
-use sqlx::{Pool, Postgres, Transaction};
 use serde::Serialize;
+use sqlx::{Pool, Postgres, Transaction};
 
 #[derive(serde::Deserialize)]
 pub struct TransacaoJson {
@@ -113,8 +113,8 @@ pub async fn register_transacao(
     };
 
     let (limite, saldo) = update_saldo_and_fetch(&mut transaction, client_id, new_transacao_valor)
-    .await
-    .map_err(|_| TransactionError::BalanceUpdateError)?; // Handle potential errors
+        .await
+        .map_err(|_| TransactionError::BalanceUpdateError)?; // Handle potential errors
 
     transaction
         .commit()
@@ -127,7 +127,7 @@ pub async fn update_saldo_and_fetch(
     transaction: &mut Transaction<'_, Postgres>,
     client_id: i16,
     valor: i32,
-) -> Result<(i32,i32), sqlx::Error> {
+) -> Result<(i32, i32), sqlx::Error> {
     sqlx::query!(
         r#"UPDATE cliente
         SET saldo = saldo + $1

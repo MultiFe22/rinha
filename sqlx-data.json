@@ -1,0 +1,115 @@
+{
+  "db": "PostgreSQL",
+  "50fec06b3daf448e2a35e229652ef88e4d41e5f39d75916d87d398ba46552550": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Bpchar",
+          "Varchar",
+          "Int2"
+        ]
+      }
+    },
+    "query": "INSERT INTO transacao (valor, tipo, descricao, cliente_id)\n        VALUES ($1, $2, $3, $4)\n        "
+  },
+  "7fd79054b4894723dd3b3cea624a06d732c6d7876ab77e792c5e53872472d6ca": {
+    "describe": {
+      "columns": [
+        {
+          "name": "saldo",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "limite",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "now",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Int2"
+        ]
+      }
+    },
+    "query": "SELECT saldo, limite, NOW() FROM cliente WHERE id = $1;"
+  },
+  "aa4ed233e2fe9acd92c097d0b1e4f7ab527e5c7287ca80cf1e4732dda3af72cf": {
+    "describe": {
+      "columns": [
+        {
+          "name": "limite",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "saldo",
+          "ordinal": 1,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int2"
+        ]
+      }
+    },
+    "query": "UPDATE cliente\n        SET saldo = saldo + $1\n        WHERE id = $2\n        RETURNING limite, saldo;"
+  },
+  "ed5934cd874af81cbbc23338ba1805d8be63a31f57cf2cbfd0b4a996cdfba5d0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "valor",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "tipo",
+          "ordinal": 1,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "descricao",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "realizada_em",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int2"
+        ]
+      }
+    },
+    "query": "SELECT valor, tipo, descricao, realizada_em FROM transacao\n    WHERE cliente_id = $1\n    ORDER BY realizada_em DESC, id DESC\n    LIMIT 10;\n    "
+  }
+}

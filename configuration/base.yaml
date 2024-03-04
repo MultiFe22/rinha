@@ -2,7 +2,8 @@ application:
   port: 8000
 database:
   host: "127.0.0.1"
-  port: 5449
+  port: 5432
   username: "postgres"
   password: "password"
   database_name: "rinha"
+  require_ssl: false

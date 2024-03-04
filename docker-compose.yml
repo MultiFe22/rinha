@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  api01: &api
+    image: rinhatest
+    hostname: api01
+    environment:
+      APP_DATABASE__USERNAME: ${POSTGRES_USER:-postgres}
+      APP_DATABASE__PASSWORD: ${POSTGRES_PASSWORD:-password}
+      APP_DATABASE__HOST: ${DB_HOST:-postgres}
+      APP_DATABASE__PORT: ${DB_PORT:-5432}
+      APP_DATABASE__DATABASE_NAME: ${POSTGRES_DB:-rinha}
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "0.50"
+    #       memory: "120MB"
+
+  api02:
+    <<: *api
+    hostname: api02
+    ports:
+      - "8002:8000"
+
+  postgres:
+    image: postgres
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-rinha}
+    command: ["postgres", "-N", "1000"]  # Increase max number of connections
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "0.35"
+    #       memory: "240MB"
+
+  db-init:
+    image: tommylike/rust-sqlx:latest
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${POSTGRES_DB:-rinha}
+    depends_on:
+      - postgres
+    command: >
+      /bin/bash -c "
+      export PGPASSWORD=${POSTGRES_PASSWORD:-password};
+      until psql -h postgres -U ${POSTGRES_USER:-postgres} -p 5432 -d postgres -c '\\q'; do
+        >&2 echo 'Postgres is still unavailable - sleeping';
+        sleep 1;
+      done;
+      echo 'Postgres is up and running on port ${DB_PORT:-5432}!';
+      sqlx database create;
+      sqlx migrate run;
+      echo 'Postgres has been migrated, ready to go!';
+      "
+    volumes:
+      - ./migrations:/app/migrations # Assuming your migrations are in the current directory; adjust as needed
+    working_dir: /app
+  
+  envoy:
+    image: envoyproxy/envoy:v1.29-latest
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "9999:9999" # Expose Envoy's default listener port
+    depends_on:
+      - api01
+      - api02
